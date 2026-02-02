@@ -5,6 +5,7 @@ import csLocale from "@fullcalendar/core/locales/cs";
 
 import "./bootstrap";
 
+
 document.addEventListener("DOMContentLoaded", () => {
   const el = document.getElementById("calendar");
   if (!el) return;
