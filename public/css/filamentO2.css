@@ -1,0 +1,46 @@
+.fi-ta-ctn {
+    background-color: rgba(105, 105, 105, 0);
+    border-color: rgba(240, 248, 255, 0) !important;
+    box-shadow: none;
+}
+
+
+.fi-ta-table tbody thead tr{
+    background-color: #d9ebff00;
+}
+
+.fi-ta-table tbody tr:hover {
+    background-color: #D9EBFF;
+}
+
+.fi-ta-table tbody tr {
+    background-color: #ffffff;
+}
+
+.fi-ta-filter-indicators {
+    background: none;
+}
+.fi-checkbox-input {
+    -webkit-appearance: none; /* Pro WebKit prohlížeče (Chrome, Safari, Android) */
+    -moz-appearance: none; /* Pro Firefox */
+    appearance: none; /* Standardní vlastnost */
+
+    width: 15px; /* Šířka checkboxu */
+    height: 15px; /* Výška checkboxu */
+    background-color: #FFFFFF; /* Světlejší šedé pozadí */
+    border: 1px solid #d0d0d0; /* Světlejší šedý okraj */
+    border-radius: 20%; /* Zaoblení checkboxu */
+    cursor: pointer; /* Změna kurzoru na ukazatel */
+
+    display: inline-block; /* Ujistí se, že element je správně zobrazen */
+    box-sizing: border-box; /* Zajistí správné chování rozměrů */
+
+    -webkit-transition: background-color 0.2s ease, border-color 0.2s ease; /* Pro WebKit */
+    -moz-transition: background-color 0.2s ease, border-color 0.2s ease; /* Pro Firefox */
+    transition: background-color 0.2s ease, border-color 0.2s ease; /* Standardní přechod */
+}
+
+.fi-checkbox-input:focus {
+    outline: none; /* Odstranění výchozího focus efektu */
+    border-color: #a0a0a0; /* Jemný tmavší šedý okraj při focusu */
+}

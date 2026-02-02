@@ -1,3 +1,73 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* buňka dne = referenční bod */
+.fc-daygrid-day {
+  position: relative;
+}
+
+/* background eventy (svátky) */
+.fc-bg-event {
+  opacity: 1 !important;
+  z-index: 1;
+}
+
+/* datum (číslo dne) vždy navrchu */
+.fc-daygrid-day-top {
+  position: relative;
+  z-index: 3;
+}
+
+/* svátek label přes buňku */
+.holiday-label.fc-daygrid-event {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+
+  display: flex;
+  align-items: center; /* svisle */
+  justify-content: center; /* vodorovně */
+
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+
+  /* nech nahoře prostor pro číslo dne */
+  padding: 14px 4px 0 4px;
+
+  pointer-events: none;
+}
+
+.holiday-label.fc-daygrid-event .fc-event-main {
+  width: 100%;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+/* text svátku */
+.holiday-label .fc-event-title {
+  font-size: 0.7rem;
+  line-height: 1.15;
+  font-weight: 600;
+  color: #262626;
+
+  text-align: center;
+  max-width: 90%;
+
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* pracovní dny */
+.fc-daygrid-day-frame {
+  background-color: white;
+}
+
+/* sobota + neděle */
+.fc-day-sat .fc-daygrid-day-frame,
+.fc-day-sun .fc-daygrid-day-frame {
+  background-color: #e5e7eb;
+}

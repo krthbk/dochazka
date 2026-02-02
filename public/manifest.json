@@ -1,0 +1,32 @@
+{
+  "public/images/layout/elevation.png": {
+    "file": "assets/elevation-a3f2aede.png",
+    "src": "public/images/layout/elevation.png"
+  },
+  "public/images/layout/eshop_2.png": {
+    "file": "assets/eshop_2-90df74c2.png",
+    "src": "public/images/layout/eshop_2.png"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-1bfba1ec.css",
+    "isEntry": true,
+    "src": "resources/css/app.css"
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-53f2a38c.js",
+    "isEntry": true,
+    "src": "resources/js/app.js"
+  },
+  "resources/on-air/OnAir-Bold.woff2": {
+    "file": "assets/OnAir-Bold-c284299a.woff2",
+    "src": "resources/on-air/OnAir-Bold.woff2"
+  },
+  "resources/on-air/OnAir-Light.woff2": {
+    "file": "assets/OnAir-Light-4347e083.woff2",
+    "src": "resources/on-air/OnAir-Light.woff2"
+  },
+  "resources/on-air/OnAir-Regular.woff2": {
+    "file": "assets/OnAir-Regular-c1104199.woff2",
+    "src": "resources/on-air/OnAir-Regular.woff2"
+  }
+}
