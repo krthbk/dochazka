@@ -24,6 +24,7 @@ class AttendanceController extends Controller
             'from_date' => ['required', 'date'],
             'to_date'   => ['required', 'date', 'after_or_equal:from_date'],
             'activity'  => ['required', 'string', 'max:255'],
+            'note'      => ['nullable', 'string'], // ✅ POZNÁMKA
         ]);
 
         $row = Attendance::create([
@@ -31,6 +32,7 @@ class AttendanceController extends Controller
             'from_date'      => $data['from_date'],
             'to_date'        => $data['to_date'],
             'activity'       => $data['activity'],
+            'note'           => $data['note'] ?? null, // ✅ POZNÁMKA
         ]);
 
         // ✅ když posíláš fetch, vrať JSON
@@ -50,6 +52,7 @@ class AttendanceController extends Controller
             'from_date' => ['required', 'date'],
             'to_date'   => ['required', 'date', 'after_or_equal:from_date'],
             'activity'  => ['required', 'string', 'max:255'],
+            'note'      => ['nullable', 'string'], // ✅ POZNÁMKA
         ]);
 
         $attendance->update([
@@ -57,6 +60,7 @@ class AttendanceController extends Controller
             'from_date'      => $data['from_date'],
             'to_date'        => $data['to_date'],
             'activity'       => $data['activity'],
+            'note'           => $data['note'] ?? null, // ✅ POZNÁMKA
         ]);
 
         if ($request->wantsJson()) {
@@ -101,11 +105,16 @@ class AttendanceController extends Controller
                 'id' => (string) $a->id,
                 'title' => $a->activity,
                 'start' => Carbon::parse($a->from_date)->toDateString(),
-                'end' => Carbon::parse($a->to_date)->addDay()->toDateString(), // exclusive
+
+                // FullCalendar bere end jako exclusive -> +1 den
+                'end' => Carbon::parse($a->to_date)->addDay()->toDateString(),
+
                 'allDay' => true,
+
                 'extendedProps' => [
-                    'memberId' => $a->team_member_id,
+                    'memberId'   => $a->team_member_id,
                     'memberName' => $a->member?->name ?? '',
+                    'note'       => $a->note ?? '', // ✅ POZNÁMKA pro tooltip/hover
                 ],
             ];
         });

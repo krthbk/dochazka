@@ -2,7 +2,8 @@ import { Calendar } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import csLocale from "@fullcalendar/core/locales/cs";
-
+import tippy from "tippy.js";
+import "tippy.js/dist/tippy.css";
 import "./bootstrap";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -239,24 +240,45 @@ document.addEventListener("DOMContentLoaded", () => {
             return { domNodes: [wrap] };
         },
 
-        eventDidMount: (info) => {
-            const memberId = info.event.extendedProps?.memberId;
-            if (!memberId) return; // svátky a jiné eventy
+eventDidMount: (info) => {
+  const memberId = info.event.extendedProps?.memberId;
+  if (!memberId) return;
 
-            const c = colorForMember(memberId);
-            info.el.style.backgroundColor = c;
-            info.el.style.borderColor = c;
-            info.el.style.color = "white";
+  const c = colorForMember(memberId);
+  info.el.style.backgroundColor = c;
+  info.el.style.borderColor = c;
+  info.el.style.color = "white";
+  info.el.style.cursor = "pointer";
 
-            // tooltip title (hover)
-            const name = info.event.extendedProps?.memberName || "";
-            info.el.title = name
-                ? `${name}: ${info.event.title}`
-                : info.event.title;
+  const name = info.event.extendedProps?.memberName || "";
+  const note = info.event.extendedProps?.note || ""; // 👈 poznámka z backendu
 
-            // cursor, ať je jasný, že jde kliknout/editovat
-            info.el.style.cursor = "pointer";
-        },
+  // fallback title (kdyby tippy nebyl)
+  info.el.title = name ? `${name}: ${info.event.title}` : info.event.title;
+
+  // ✅ tippy tooltip (hover)
+  tippy(info.el, {
+    allowHTML: true,
+    placement: "top",
+    interactive: false,
+    theme: "light",
+    content: `
+      <div style="font-weight:700;margin-bottom:4px;">
+        ${name ? name : ""}
+      </div>
+      <div style="font-weight:600;">
+        ${info.event.title || ""}
+      </div>
+      ${
+        note
+          ? `<div style="margin-top:6px;font-size:12px;opacity:.9;">
+               ${note}
+             </div>`
+          : ""
+      }
+    `,
+  });
+},
     });
 
     calendar.render();
