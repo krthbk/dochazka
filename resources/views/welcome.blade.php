@@ -10,9 +10,7 @@
 
     <title>Docházka</title>
 
-    <!-- FullCalendar CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.20/index.global.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.20/index.global.min.css">
+@vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">

@@ -3,8 +3,6 @@
 return [
     'cz_fixed' => [
         ['month' => 1,  'day' => 1,  'title' => 'Nový rok / Den obnovy samostatného českého státu'],
-        ['month' => 4,  'day' => 3,  'title' => 'Velký pátek'],
-        ['month' => 4,  'day' => 6,  'title' => 'Velikonoční pondělí'],
         ['month' => 5,  'day' => 1,  'title' => 'Svátek práce'],
         ['month' => 5,  'day' => 8,  'title' => 'Den vítězství'],
         ['month' => 7,  'day' => 5,  'title' => 'Cyril a Metoděj'],

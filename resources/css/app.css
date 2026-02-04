@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ✅ FullCalendar CSS (SPRÁVNÉ soubory pro v6) */
+@import "@fullcalendar/core/main.css";
+@import "@fullcalendar/daygrid/main.css";
+
 /* buňka dne = referenční bod */
 .fc-daygrid-day {
   position: relative;
@@ -26,8 +30,8 @@
   z-index: 2;
 
   display: flex;
-  align-items: center; /* svisle */
-  justify-content: center; /* vodorovně */
+  align-items: center;
+  justify-content: center;
 
   background: transparent !important;
   border: 0 !important;

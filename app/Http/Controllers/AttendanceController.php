@@ -85,8 +85,16 @@ class AttendanceController extends Controller
     // ✅ záznamy pro kalendář (+ filtr podle člověka)
     public function events(Request $request)
     {
-        $start = Carbon::parse($request->query('start'))->startOfDay();
-        $end   = Carbon::parse($request->query('end'))->endOfDay();
+        // ✅ VALIDACE: start/end jsou povinné a musí být datum
+        // + member_id, pokud je, musí být platné ID člena týmu
+        $validated = $request->validate([
+            'start'     => ['required', 'date'],
+            'end'       => ['required', 'date'],
+            'member_id' => ['nullable', 'integer', 'exists:team_members,id'],
+        ]);
+
+        $start = Carbon::parse($validated['start'])->startOfDay();
+        $end   = Carbon::parse($validated['end'])->endOfDay();
 
         $query = Attendance::query()
             ->with('member:id,name')
@@ -94,8 +102,8 @@ class AttendanceController extends Controller
             ->whereDate('from_date', '<=', $end);
 
         // ✅ FILTR: když přijde member_id, vrať jen jeho záznamy
-        if ($request->filled('member_id')) {
-            $query->where('team_member_id', (int) $request->query('member_id'));
+        if (!empty($validated['member_id'])) {
+            $query->where('team_member_id', (int) $validated['member_id']);
         }
 
         $rows = $query->get();

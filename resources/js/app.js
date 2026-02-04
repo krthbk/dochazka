@@ -2,13 +2,21 @@ import { Calendar } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import csLocale from "@fullcalendar/core/locales/cs";
+
+
+
 import tippy from "tippy.js";
 import "tippy.js/dist/tippy.css";
 import "./bootstrap";
 
+console.log("app.js loaded");
+window.__APP_JS_LOADED__ = true;
+
 document.addEventListener("DOMContentLoaded", () => {
     const el = document.getElementById("calendar");
     if (!el) return;
+
+    console.log("DOMContentLoaded, calendar el:", el);
 
     const dialog = document.getElementById("attendanceDialog");
     const form = document.getElementById("attendanceForm");
@@ -28,12 +36,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const toView = document.getElementById("to_date_view");
     const activity = document.getElementById("activity");
 
-    // CSRF token z meta tagu (Laravel)
     const csrf = document
         .querySelector('meta[name="csrf-token"]')
         ?.getAttribute("content");
 
-    // paleta barev pro členy týmu
+    // XSS-safe escape pro data z DB (tooltipy, HTML šablony apod.)
+    const esc = (s = "") =>
+        String(s).replace(/[&<>"']/g, (c) =>
+            ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;",
+            })[c],
+        );
+
     const palette = [
         "#1d4ed8",
         "#16a34a",
@@ -51,12 +69,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return palette[idx];
     }
 
-    // 👉 vybraný člen pro filtr (prázdné = všichni)
     function selectedMemberId() {
         return userSelect?.value ? String(userSelect.value) : "";
     }
 
-    // ✅ pro vytváření musí být vybraný člen
     function mustHaveMemberForWrite() {
         if (!selectedMemberId()) {
             alert("Nejdřív vyber člena týmu (pro zápis).");
@@ -93,7 +109,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function openDialog(fromDate, toDate, preset = {}) {
         if (!dialog) return;
 
-        // create mód -> musí být vybraný člen
         if (!preset?.skipMemberCheck) {
             if (!mustHaveMemberForWrite()) return;
         }
@@ -113,10 +128,8 @@ document.addEventListener("DOMContentLoaded", () => {
         dialog?.close();
     }
 
-    // zavření dialogu
     cancelBtn?.addEventListener("click", () => closeDialog());
 
-    // ruční změna dat v dialogu -> sync do hidden inputů
     fromView?.addEventListener("change", () => {
         if (from) from.value = fromView.value;
     });
@@ -124,18 +137,31 @@ document.addEventListener("DOMContentLoaded", () => {
         if (to) to.value = toView.value;
     });
 
-    // Helper: FullCalendar posílá end jako exclusive, my chceme inclusive v inputu
-    function inclusiveToDateFromEventEnd(exclusiveEnd) {
-        // exclusiveEnd je string YYYY-MM-DD
-        const d = new Date(exclusiveEnd);
-        d.setDate(d.getDate() - 1);
-        return d.toISOString().slice(0, 10);
+    function dateFromYmd(ymd) {
+        const [y, m, d] = String(ymd)
+            .split("-")
+            .map((n) => parseInt(n, 10));
+        return new Date(y, m - 1, d);
     }
 
-    // ✅ URL pro update/delete
+    function ymdFromDate(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+    }
+
+    function inclusiveToDateFromEventEnd(exclusiveEnd) {
+        const d = dateFromYmd(exclusiveEnd);
+        d.setDate(d.getDate() - 1);
+        return ymdFromDate(d);
+    }
+
     function attendanceItemUrl(id) {
         return `/attendance/${id}`;
     }
+
+    console.log("creating calendar");
 
     const calendar = new Calendar(el, {
         plugins: [dayGridPlugin, interactionPlugin],
@@ -143,76 +169,71 @@ document.addEventListener("DOMContentLoaded", () => {
         locale: csLocale,
         firstDay: 1,
         height: "auto",
+        timeZone: "Europe/Prague",
 
         selectable: true,
         selectMirror: true,
-        dayMaxEventRows: 3, // ✅ ukáže max 3 záznamy
-        moreLinkClick: "popover", // ✅ zbytek se otevře v popoveru
-        // klik na den => CREATE
+        dayMaxEventRows: 3,
+        moreLinkClick: "popover",
+
         dateClick: (info) => {
             setCreateMode();
             openDialog(info.dateStr, info.dateStr);
         },
 
-        // výběr rozsahu => CREATE
         select: (info) => {
             setCreateMode();
 
-            // end je exclusive -> -1 den
             const end = new Date(info.end);
             end.setDate(end.getDate() - 1);
-            const toDate = end.toISOString().slice(0, 10);
+            const toDate = ymdFromDate(end);
 
             openDialog(info.startStr.slice(0, 10), toDate);
         },
 
-        // ✅ klik na existující event => EDIT (ignoruj svátky)
         eventClick: (arg) => {
-            // svátky / background eventy nechceme editovat
             if (arg.event.display === "background") return;
 
             const memberId = arg.event.extendedProps?.memberId;
-            if (!memberId) return; // např. holiday label event
+            if (!memberId) return;
 
-            // přepni do edit módu
             setEditMode(arg.event.id);
 
-            // nastav select na člena (ať to sedí vizuálně)
             if (userSelect) userSelect.value = String(memberId);
             if (userHidden) userHidden.value = String(memberId);
 
             const startDate = arg.event.startStr?.slice(0, 10);
-            // end je exclusive -> převedeme na inclusive
             const endExclusive = arg.event.endStr
                 ? arg.event.endStr.slice(0, 10)
                 : startDate;
+
             const endDate = arg.event.endStr
                 ? inclusiveToDateFromEventEnd(endExclusive)
                 : startDate;
 
             openDialog(startDate, endDate, {
                 activity: arg.event.title || "",
-                skipMemberCheck: true, // editace nevyžaduje "vybraného člena" pro zápis
+                skipMemberCheck: true,
             });
         },
 
         eventSources: [
             {
-                // ✅ docházka – umí filtr podle člena
                 url: "/attendance/events",
                 extraParams: () => ({
-                    member_id: selectedMemberId(), // "" => všichni
+                    member_id: selectedMemberId(),
                 }),
+                success: () => console.log("attendance loaded"),
+                failure: (err) => console.error("attendance failed", err),
             },
             {
-                // svátky
                 url: "/holidays/cz",
+                success: () => console.log("holidays loaded"),
+                failure: (err) => console.error("holidays failed", err),
             },
         ],
 
-        // ✅ VARIANTA B: jméno + aktivita v buňce
         eventContent: (arg) => {
-            // background eventy (svátky) neřeš
             if (arg.event.display === "background") return;
 
             const name = arg.event.extendedProps?.memberName || "";
@@ -240,55 +261,67 @@ document.addEventListener("DOMContentLoaded", () => {
             return { domNodes: [wrap] };
         },
 
-eventDidMount: (info) => {
-  const memberId = info.event.extendedProps?.memberId;
-  if (!memberId) return;
+        eventDidMount: (info) => {
+            // background eventy (svátky pozadí) nestylujeme
+            if (info.event.display === "background") return;
 
-  const c = colorForMember(memberId);
-  info.el.style.backgroundColor = c;
-  info.el.style.borderColor = c;
-  info.el.style.color = "white";
-  info.el.style.cursor = "pointer";
+            const memberId = info.event.extendedProps?.memberId;
 
-  const name = info.event.extendedProps?.memberName || "";
-  const note = info.event.extendedProps?.note || ""; // 👈 poznámka z backendu
+            // Attendance event (má memberId)
+            if (memberId) {
+                const c = colorForMember(memberId);
+                info.el.style.backgroundColor = c;
+                info.el.style.borderColor = c;
+                info.el.style.color = "white";
+                info.el.style.cursor = "pointer";
+            }
 
-  // fallback title (kdyby tippy nebyl)
-  info.el.title = name ? `${name}: ${info.event.title}` : info.event.title;
+            const name = info.event.extendedProps?.memberName || "";
+            const note = info.event.extendedProps?.note || "";
 
-  // ✅ tippy tooltip (hover)
-  tippy(info.el, {
-    allowHTML: true,
-    placement: "top",
-    interactive: false,
-    theme: "light",
-    content: `
-      <div style="font-weight:700;margin-bottom:4px;">
-        ${name ? name : ""}
-      </div>
-      <div style="font-weight:600;">
-        ${info.event.title || ""}
-      </div>
-      ${
-        note
-          ? `<div style="margin-top:6px;font-size:12px;opacity:.9;">
-               ${note}
-             </div>`
-          : ""
-      }
-    `,
-  });
-},
+            // tooltippy dává smysl jen u attendance eventů (svátky mají vlastní overlay label)
+            if (!memberId) return;
+
+            const safeName = esc(name);
+            const safeTitle = esc(info.event.title || "");
+            const safeNote = esc(note).replace(/\n/g, "<br>");
+
+            // title musí být čistý text (bez HTML)
+            info.el.title = name ? `${name}: ${info.event.title || ""}` : (info.event.title || "");
+
+            if (info.el._tippy) info.el._tippy.destroy();
+
+            tippy(info.el, {
+                allowHTML: true,
+                placement: "top",
+                interactive: false,
+                theme: "light",
+                content: `
+                  <div style="font-weight:700;margin-bottom:4px;">
+                    ${safeName}
+                  </div>
+                  <div style="font-weight:600;">
+                    ${safeTitle}
+                  </div>
+                  ${
+                      safeNote
+                          ? `<div style="margin-top:6px;font-size:12px;opacity:.9;">
+                               ${safeNote}
+                             </div>`
+                          : ""
+                  }
+                `,
+            });
+        },
     });
 
     calendar.render();
+    console.log("calendar rendered");
 
-    // ✅ filtr: změna selectu -> refetch eventů
     userSelect?.addEventListener("change", () => {
         calendar.refetchEvents();
     });
 
-    // ✅ mazání záznamu (jen edit mód)
     deleteBtn?.addEventListener("click", async () => {
         const id = attendanceIdInput?.value;
         if (!id) return;
@@ -325,7 +358,6 @@ eventDidMount: (info) => {
         }
     });
 
-    // ✅ submit bez reloadu + refetch eventů (CREATE i EDIT)
     form?.addEventListener("submit", async (e) => {
         e.preventDefault();
 
@@ -337,18 +369,14 @@ eventDidMount: (info) => {
         const edit = isEditMode();
         const id = attendanceIdInput?.value;
 
-        // CREATE: musí být vybraný člen
         if (!edit) {
             if (!mustHaveMemberForWrite()) return;
             if (userHidden) userHidden.value = selectedMemberId();
-            setCreateMode(); // jistota
+            setCreateMode();
         } else {
-            // EDIT: vezmi člena ze selectu (nebo z hidden), musí existovat
             const memberId = selectedMemberId();
             if (!memberId) {
-                alert(
-                    "Pro editaci musíš mít vybraného člena (aspoň toho původního).",
-                );
+                alert("Pro editaci musíš mít vybraného člena.");
                 return;
             }
             if (userHidden) userHidden.value = memberId;
@@ -356,14 +384,7 @@ eventDidMount: (info) => {
         }
 
         const formData = new FormData(form);
-
-        // Laravel: když posíláš fetch, nejjednodušší je vždy POST a pro update přidat _method=PATCH
-        // (proto máme hidden #_method)
-        if (edit) {
-            formData.set("_method", "PATCH");
-        } else {
-            formData.set("_method", "POST");
-        }
+        formData.set("_method", edit ? "PATCH" : "POST");
 
         const url = edit ? attendanceItemUrl(id) : form.getAttribute("action");
 
@@ -380,7 +401,7 @@ eventDidMount: (info) => {
             if (!res.ok) {
                 const text = await res.text();
                 console.error(text);
-                alert("Nepodařilo se uložit. Mrkni do konzole (Console).");
+                alert("Nepodařilo se uložit. Mrkni do konzole.");
                 return;
             }
 
@@ -388,11 +409,10 @@ eventDidMount: (info) => {
             calendar.refetchEvents();
         } catch (err) {
             console.error(err);
-            alert("Chyba při ukládání (network/JS). Mrkni do konzole.");
+            alert("Chyba při ukládání. Mrkni do konzole.");
         }
     });
 
-    // když dialog zavřeš, další otevření ať defaultne na CREATE
     dialog?.addEventListener("close", () => {
         setCreateMode();
     });
