@@ -3,8 +3,6 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import csLocale from "@fullcalendar/core/locales/cs";
 
-
-
 import tippy from "tippy.js";
 import "tippy.js/dist/tippy.css";
 import "./bootstrap";
@@ -35,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fromView = document.getElementById("from_date_view");
     const toView = document.getElementById("to_date_view");
     const activity = document.getElementById("activity");
+    const note = document.getElementById("note"); // ✅ NEW: textarea poznámky
 
     const csrf = document
         .querySelector('meta[name="csrf-token"]')
@@ -120,6 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (toView) toView.value = toDate;
 
         if (activity) activity.value = preset.activity ?? "";
+        if (note) note.value = preset.note ?? ""; // ✅ NEW: vyplnění poznámky při editaci
 
         dialog.showModal();
     }
@@ -213,6 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             openDialog(startDate, endDate, {
                 activity: arg.event.title || "",
+                note: arg.event.extendedProps?.note || "", // ✅ NEW: načtení poznámky do modalu
                 skipMemberCheck: true,
             });
         },
@@ -277,17 +278,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const name = info.event.extendedProps?.memberName || "";
-            const note = info.event.extendedProps?.note || "";
+            const noteText = info.event.extendedProps?.note || "";
 
             // tooltippy dává smysl jen u attendance eventů (svátky mají vlastní overlay label)
             if (!memberId) return;
 
             const safeName = esc(name);
             const safeTitle = esc(info.event.title || "");
-            const safeNote = esc(note).replace(/\n/g, "<br>");
+            const safeNote = esc(noteText).replace(/\n/g, "<br>");
 
             // title musí být čistý text (bez HTML)
-            info.el.title = name ? `${name}: ${info.event.title || ""}` : (info.event.title || "");
+            info.el.title = name
+                ? `${name}: ${info.event.title || ""}`
+                : info.event.title || "";
 
             if (info.el._tippy) info.el._tippy.destroy();
 
@@ -415,5 +418,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     dialog?.addEventListener("close", () => {
         setCreateMode();
+        if (note) note.value = ""; // ✅ NEW: vyčištění poznámky po zavření modalu (lepší UX)
     });
 });
