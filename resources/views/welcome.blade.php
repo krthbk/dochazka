@@ -67,7 +67,7 @@
 
             {{-- hidden values --}}
             <input type="hidden" id="user_id_hidden" name="user_id">
-            <input type="hidden" id="attendance_id" value="">
+            <input type="hidden" id="attendance_id" name="attendance_id" value="">
             <input type="hidden" id="_method" name="_method" value="POST">
 
             <div class="flex items-start justify-between gap-3">
