@@ -21,3 +21,6 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+# macOS junk
+.DS_Store
+**/.DS_Store
