@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,7 +11,10 @@
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link
+        href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap"
+        rel="stylesheet"
+    />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -28,15 +30,17 @@
 
 <main class="max-w-5xl mx-auto px-4 py-6 space-y-4">
 
-    {{-- Ovládání --}}
+    {{-- Ovládání / filtr --}}
     <section>
-        <label for="user_id" class="block text-sm font-medium text-gray-700">
+        <label
+            for="team_member_filter"
+            class="block text-sm font-medium text-gray-700"
+        >
             Zapsat za
         </label>
 
         <select
-            id="user_id"
-            name="user_id"
+            id="team_member_filter"
             class="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2"
         >
             <option value="">— vyber člena týmu —</option>
@@ -52,11 +56,17 @@
 
     {{-- Kalendář --}}
     <section>
-        <div id="calendar" class="bg-white rounded-2xl shadow p-3"></div>
+        <div
+            id="calendar"
+            class="bg-white rounded-2xl shadow p-3"
+        ></div>
     </section>
 
     {{-- Dialog --}}
-    <dialog id="attendanceDialog" class="rounded-2xl p-0 w-full max-w-lg">
+    <dialog
+        id="attendanceDialog"
+        class="rounded-2xl p-0 w-full max-w-lg"
+    >
         <form
             id="attendanceForm"
             method="post"
@@ -66,14 +76,33 @@
             @csrf
 
             {{-- hidden values --}}
-            <input type="hidden" id="user_id_hidden" name="user_id">
-            <input type="hidden" id="attendance_id" name="attendance_id" value="">
-            <input type="hidden" id="_method" name="_method" value="POST">
+            <input
+                type="hidden"
+                id="team_member_id_hidden"
+                name="team_member_id"
+            >
+            <input
+                type="hidden"
+                id="attendance_id"
+                name="attendance_id"
+                value=""
+            >
+            <input
+                type="hidden"
+                id="_method"
+                name="_method"
+                value="POST"
+            >
 
             <div class="flex items-start justify-between gap-3">
                 <div>
-                    <h2 class="text-xl font-semibold">Zapsat aktivitu</h2>
-                    <p id="dialogHint" class="text-xs text-gray-500 mt-1">
+                    <h2 class="text-xl font-semibold">
+                        Zapsat aktivitu
+                    </h2>
+                    <p
+                        id="dialogHint"
+                        class="text-xs text-gray-500 mt-1"
+                    >
                         Vytváříš nový záznam.
                     </p>
                 </div>
@@ -87,12 +116,15 @@
                 </button>
             </div>
 
+            {{-- Skryté datumy --}}
             <input type="hidden" id="from_date" name="from_date">
             <input type="hidden" id="to_date" name="to_date">
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Od</label>
+                    <label class="block text-sm font-medium text-gray-700">
+                        Od
+                    </label>
                     <input
                         id="from_date_view"
                         type="date"
@@ -101,7 +133,9 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Do</label>
+                    <label class="block text-sm font-medium text-gray-700">
+                        Do
+                    </label>
                     <input
                         id="to_date_view"
                         type="date"
@@ -112,7 +146,10 @@
 
             {{-- Aktivita --}}
             <div>
-                <label for="activity" class="block text-sm font-medium text-gray-700">
+                <label
+                    for="activity"
+                    class="block text-sm font-medium text-gray-700"
+                >
                     Aktivita
                 </label>
                 <input
@@ -125,9 +162,12 @@
                 >
             </div>
 
-            {{-- ✅ POZNÁMKA --}}
+            {{-- Poznámka --}}
             <div>
-                <label for="note" class="block text-sm font-medium text-gray-700">
+                <label
+                    for="note"
+                    class="block text-sm font-medium text-gray-700"
+                >
                     Poznámka (volitelné)
                 </label>
                 <textarea

@@ -6,13 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Attendance extends Model
 {
-protected $fillable = [
-  'team_member_id',
-  'from_date',
-  'to_date',
-  'activity',
-  'note',
-];
+    protected $fillable = [
+        'team_member_id',
+        'from_date',
+        'to_date',
+        'activity',
+        'note',
+    ];
 
     public function member()
     {

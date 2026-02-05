@@ -22,4 +22,3 @@ class TeamMemberSeeder extends Seeder
         ]);
     }
 }
-

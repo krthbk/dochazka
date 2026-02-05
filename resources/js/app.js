@@ -20,8 +20,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("attendanceForm");
     const cancelBtn = document.getElementById("cancelDialog");
 
-    const userSelect = document.getElementById("user_id");
-    const userHidden = document.getElementById("user_id_hidden");
+    // 🔎 filtr (select nahoře)
+    // POZOR: v Blade musíš mít select s id="team_member_filter"
+    const memberFilter = document.getElementById("team_member_filter");
+
+    // ✅ zapisovaná hodnota do formu (modal)
+    const teamMemberHidden = document.getElementById("team_member_id_hidden");
 
     const attendanceIdInput = document.getElementById("attendance_id");
     const methodInput = document.getElementById("_method");
@@ -33,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fromView = document.getElementById("from_date_view");
     const toView = document.getElementById("to_date_view");
     const activity = document.getElementById("activity");
-    const note = document.getElementById("note"); // ✅ NEW: textarea poznámky
+    const note = document.getElementById("note");
 
     const csrf = document
         .querySelector('meta[name="csrf-token"]')
@@ -69,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function selectedMemberId() {
-        return userSelect?.value ? String(userSelect.value) : "";
+        return memberFilter?.value ? String(memberFilter.value) : "";
     }
 
     function mustHaveMemberForWrite() {
@@ -77,7 +81,8 @@ document.addEventListener("DOMContentLoaded", () => {
             alert("Nejdřív vyber člena týmu (pro zápis).");
             return false;
         }
-        if (userHidden) userHidden.value = selectedMemberId();
+
+        if (teamMemberHidden) teamMemberHidden.value = selectedMemberId();
         return true;
     }
 
@@ -119,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (toView) toView.value = toDate;
 
         if (activity) activity.value = preset.activity ?? "";
-        if (note) note.value = preset.note ?? ""; // ✅ NEW: vyplnění poznámky při editaci
+        if (note) note.value = preset.note ?? "";
 
         dialog.showModal();
     }
@@ -199,8 +204,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             setEditMode(arg.event.id);
 
-            if (userSelect) userSelect.value = String(memberId);
-            if (userHidden) userHidden.value = String(memberId);
+            // filtr nastavíme, aby UI sedělo s editovaným záznamem
+            if (memberFilter) memberFilter.value = String(memberId);
+
+            // do formu posíláme team_member_id
+            if (teamMemberHidden) teamMemberHidden.value = String(memberId);
 
             const startDate = arg.event.startStr?.slice(0, 10);
             const endExclusive = arg.event.endStr
@@ -213,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             openDialog(startDate, endDate, {
                 activity: arg.event.title || "",
-                note: arg.event.extendedProps?.note || "", // ✅ NEW: načtení poznámky do modalu
+                note: arg.event.extendedProps?.note || "",
                 skipMemberCheck: true,
             });
         },
@@ -263,12 +271,10 @@ document.addEventListener("DOMContentLoaded", () => {
         },
 
         eventDidMount: (info) => {
-            // background eventy (svátky pozadí) nestylujeme
             if (info.event.display === "background") return;
 
             const memberId = info.event.extendedProps?.memberId;
 
-            // Attendance event (má memberId)
             if (memberId) {
                 const c = colorForMember(memberId);
                 info.el.style.backgroundColor = c;
@@ -280,14 +286,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const name = info.event.extendedProps?.memberName || "";
             const noteText = info.event.extendedProps?.note || "";
 
-            // tooltippy dává smysl jen u attendance eventů (svátky mají vlastní overlay label)
             if (!memberId) return;
 
             const safeName = esc(name);
             const safeTitle = esc(info.event.title || "");
             const safeNote = esc(noteText).replace(/\n/g, "<br>");
 
-            // title musí být čistý text (bez HTML)
             info.el.title = name
                 ? `${name}: ${info.event.title || ""}`
                 : info.event.title || "";
@@ -321,7 +325,7 @@ document.addEventListener("DOMContentLoaded", () => {
     calendar.render();
     console.log("calendar rendered");
 
-    userSelect?.addEventListener("change", () => {
+    memberFilter?.addEventListener("change", () => {
         calendar.refetchEvents();
     });
 
@@ -374,7 +378,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!edit) {
             if (!mustHaveMemberForWrite()) return;
-            if (userHidden) userHidden.value = selectedMemberId();
+            if (teamMemberHidden) teamMemberHidden.value = selectedMemberId();
             setCreateMode();
         } else {
             const memberId = selectedMemberId();
@@ -382,7 +386,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 alert("Pro editaci musíš mít vybraného člena.");
                 return;
             }
-            if (userHidden) userHidden.value = memberId;
+            if (teamMemberHidden) teamMemberHidden.value = memberId;
             setEditMode(id);
         }
 
@@ -418,6 +422,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     dialog?.addEventListener("close", () => {
         setCreateMode();
-        if (note) note.value = ""; // ✅ NEW: vyčištění poznámky po zavření modalu (lepší UX)
+        if (note) note.value = "";
     });
 });

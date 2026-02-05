@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attendance;
+use App\Models\TeamMember;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use App\Models\TeamMember;
-use App\Models\Attendance;
 
 class AttendanceController extends Controller
 {
@@ -13,6 +13,7 @@ class AttendanceController extends Controller
     public function index()
     {
         $members = TeamMember::orderBy('name')->get();
+
         return view('welcome', compact('members'));
     }
 
@@ -20,22 +21,21 @@ class AttendanceController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'user_id'   => ['required', 'integer', 'exists:team_members,id'],
+            'team_member_id' => ['required', 'integer', 'exists:team_members,id'],
             'from_date' => ['required', 'date'],
-            'to_date'   => ['required', 'date', 'after_or_equal:from_date'],
-            'activity'  => ['required', 'string', 'max:255'],
-            'note'      => ['nullable', 'string'], // ✅ POZNÁMKA
+            'to_date' => ['required', 'date', 'after_or_equal:from_date'],
+            'activity' => ['required', 'string', 'max:255'],
+            'note' => ['nullable', 'string'],
         ]);
 
         $row = Attendance::create([
-            'team_member_id' => $data['user_id'],
-            'from_date'      => $data['from_date'],
-            'to_date'        => $data['to_date'],
-            'activity'       => $data['activity'],
-            'note'           => $data['note'] ?? null, // ✅ POZNÁMKA
+            'team_member_id' => (int) $data['team_member_id'],
+            'from_date' => $data['from_date'],
+            'to_date' => $data['to_date'],
+            'activity' => $data['activity'],
+            'note' => $data['note'] ?? null,
         ]);
 
-        // ✅ když posíláš fetch, vrať JSON
         if ($request->wantsJson()) {
             return response()->json(['ok' => true, 'id' => (string) $row->id]);
         }
@@ -47,20 +47,22 @@ class AttendanceController extends Controller
     public function update(Request $request, Attendance $attendance)
     {
         $data = $request->validate([
-            // user_id nechávám volitelný – můžeš i měnit komu to patří (když chceš)
-            'user_id'   => ['sometimes', 'integer', 'exists:team_members,id'],
+            // team_member_id nechávám volitelný – můžeš i měnit komu to patří
+            'team_member_id' => ['sometimes', 'integer', 'exists:team_members,id'],
             'from_date' => ['required', 'date'],
-            'to_date'   => ['required', 'date', 'after_or_equal:from_date'],
-            'activity'  => ['required', 'string', 'max:255'],
-            'note'      => ['nullable', 'string'], // ✅ POZNÁMKA
+            'to_date' => ['required', 'date', 'after_or_equal:from_date'],
+            'activity' => ['required', 'string', 'max:255'],
+            'note' => ['nullable', 'string'],
         ]);
 
         $attendance->update([
-            'team_member_id' => $data['user_id'] ?? $attendance->team_member_id,
-            'from_date'      => $data['from_date'],
-            'to_date'        => $data['to_date'],
-            'activity'       => $data['activity'],
-            'note'           => $data['note'] ?? null, // ✅ POZNÁMKA
+            'team_member_id' => isset($data['team_member_id'])
+                ? (int) $data['team_member_id']
+                : $attendance->team_member_id,
+            'from_date' => $data['from_date'],
+            'to_date' => $data['to_date'],
+            'activity' => $data['activity'],
+            'note' => $data['note'] ?? null,
         ]);
 
         if ($request->wantsJson()) {
@@ -85,23 +87,20 @@ class AttendanceController extends Controller
     // ✅ záznamy pro kalendář (+ filtr podle člověka)
     public function events(Request $request)
     {
-        // ✅ VALIDACE: start/end jsou povinné a musí být datum
-        // + member_id, pokud je, musí být platné ID člena týmu
         $validated = $request->validate([
-            'start'     => ['required', 'date'],
-            'end'       => ['required', 'date'],
+            'start' => ['required', 'date'],
+            'end' => ['required', 'date'],
             'member_id' => ['nullable', 'integer', 'exists:team_members,id'],
         ]);
 
         $start = Carbon::parse($validated['start'])->startOfDay();
-        $end   = Carbon::parse($validated['end'])->endOfDay();
+        $end = Carbon::parse($validated['end'])->endOfDay();
 
         $query = Attendance::query()
             ->with('member:id,name')
             ->whereDate('to_date', '>=', $start)
             ->whereDate('from_date', '<=', $end);
 
-        // ✅ FILTR: když přijde member_id, vrať jen jeho záznamy
         if (!empty($validated['member_id'])) {
             $query->where('team_member_id', (int) $validated['member_id']);
         }
@@ -113,16 +112,13 @@ class AttendanceController extends Controller
                 'id' => (string) $a->id,
                 'title' => $a->activity,
                 'start' => Carbon::parse($a->from_date)->toDateString(),
-
                 // FullCalendar bere end jako exclusive -> +1 den
                 'end' => Carbon::parse($a->to_date)->addDay()->toDateString(),
-
                 'allDay' => true,
-
                 'extendedProps' => [
-                    'memberId'   => $a->team_member_id,
+                    'memberId' => $a->team_member_id,
                     'memberName' => $a->member?->name ?? '',
-                    'note'       => $a->note ?? '', // ✅ POZNÁMKA pro tooltip/hover
+                    'note' => $a->note ?? '',
                 ],
             ];
         });

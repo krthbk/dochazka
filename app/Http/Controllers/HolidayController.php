@@ -11,11 +11,11 @@ class HolidayController extends Controller
     {
         $validated = $request->validate([
             'start' => ['required', 'date'],
-            'end'   => ['required', 'date'],
+            'end' => ['required', 'date'],
         ]);
 
         $start = Carbon::parse($validated['start'])->startOfDay();
-        $end   = Carbon::parse($validated['end'])->endOfDay();
+        $end = Carbon::parse($validated['end'])->endOfDay();
 
         $fixed = config('holidays.cz_fixed', []);
         $years = range($start->year, $end->year);
@@ -24,7 +24,9 @@ class HolidayController extends Controller
 
         // helper: přidá background + label pro dané datum (1 den)
         $pushHoliday = function (Carbon $date, string $title, string $idPrefix) use (&$events, $start, $end) {
-            if (!$date->betweenIncluded($start, $end)) return;
+            if (! $date->betweenIncluded($start, $end)) {
+                return;
+            }
 
             $ymd = $date->toDateString();
             $endYmd = $date->copy()->addDay()->toDateString(); // FullCalendar end = exclusive
@@ -61,7 +63,7 @@ class HolidayController extends Controller
             // easter_days = počet dnů po 21. březnu
             $easterSunday = Carbon::create($year, 3, 21)->startOfDay()->addDays(easter_days($year));
 
-            $goodFriday   = $easterSunday->copy()->subDays(2);
+            $goodFriday = $easterSunday->copy()->subDays(2);
             $easterMonday = $easterSunday->copy()->addDay();
 
             $pushHoliday($goodFriday, 'Velký pátek', "holiday-easter-goodfriday-{$year}");
